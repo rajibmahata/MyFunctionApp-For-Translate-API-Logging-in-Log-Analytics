@@ -12,7 +12,7 @@ namespace MyFunctionAppForLogging
     public class MyFunction
     {
         private readonly ILogger _logger;
-        private readonly string key = "e16ee1d4c43449de8a43e77361b7e4ac";
+        private readonly string key = "<key>";
         private readonly string endpoint = "https://api.cognitive.microsofttranslator.com";
 
         // location, also known as region.
