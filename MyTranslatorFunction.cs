@@ -44,7 +44,7 @@ namespace MyFunctionAppForLogging
 
                 // Extract custom parameters
                 var headers = req.Headers;
-                string clientName = GetHeaderValue(headers, "X-Client-Name");
+                string clientID = GetHeaderValue(headers, "X-Client-ID");
                 string environment = GetHeaderValue(headers, "X-Environment");
                 string clientTraceId = GetHeaderValue(headers, "X-ClientTraceId");
 
@@ -61,10 +61,10 @@ namespace MyFunctionAppForLogging
                     request.Headers.Add("Ocp-Apim-Subscription-Region", location);
 
                     //custom parameter 
-                    request.Headers.Add("X-ClientTraceId", clientTraceId);
-                    request.Headers.Add("X-Client-Name", clientName);
-                    request.Headers.Add("X-Environment", environment);
-                    request.Headers.Add("X-Word-Count", wordCount.ToString());
+                    //request.Headers.Add("X-ClientTraceId", clientTraceId);
+                    //request.Headers.Add("X-Client-ID", clientID);
+                    //request.Headers.Add("X-Environment", environment);
+                    //request.Headers.Add("X-Word-Count", wordCount.ToString());
 
                     _logger.LogInformation("Translate API request body: " + requestBody);
                     // Send the request and get response.
@@ -76,7 +76,7 @@ namespace MyFunctionAppForLogging
                     _logger.LogInformation($"Translate API Response:{result}");
 
                     // Log custom parameters to Log Analytics
-                    _logger.LogInformation($"ClientID: {clientName},ClientTraceId: {clientTraceId}, Environment: {environment}, WordCount: {wordCount}");
+                    _logger.LogInformation($"ClientID: {clientID},ClientTraceId: {clientTraceId}, Environment: {environment}, WordCount: {wordCount}");
 
 
                     var response = req.CreateResponse(HttpStatusCode.OK);
