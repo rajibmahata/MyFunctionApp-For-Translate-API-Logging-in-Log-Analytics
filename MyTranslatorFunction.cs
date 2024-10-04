@@ -5,22 +5,27 @@ using Google.Protobuf.WellKnownTypes;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using System.Data;
 
 namespace MyFunctionAppForLogging
 {
     public class MyFunction
     {
         private readonly ILogger _logger;
-        private readonly string key = Environment.GetEnvironmentVariable("TranslatorKey");
+        private readonly MyConfiguration options;
+        private readonly string key;
         private readonly string endpoint = "https://api.cognitive.microsofttranslator.com";
 
         // location, also known as region.
         // required if you're using a multi-service or regional (not global) resource. It can be found in the Azure portal on the Keys and Endpoint page.
         private readonly string location = "eastus";
-        public MyFunction(ILoggerFactory loggerFactory)
+        public MyFunction(ILoggerFactory loggerFactory, IOptions<MyConfiguration> _options)
         {
+            options = _options.Value;
             _logger = loggerFactory.CreateLogger<MyFunction>();
+            key = options.TranslatorKey;
         }
 
         [Function("MyTranslatorFunction")]
@@ -31,10 +36,10 @@ namespace MyFunctionAppForLogging
                 _logger.LogInformation("MyTranslatorFunction function processed a request.");
 
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-
-                dynamic data = JsonConvert.DeserializeObject(requestBody);
-                string textToTranslate = data?.Text;
+               
                 // Calculate word count
+                List<MyTranslatorFunctionRequestModel> data = JsonConvert.DeserializeObject<List<MyTranslatorFunctionRequestModel>>(requestBody);
+                string textToTranslate = data.FirstOrDefault()?.Text;
                 int wordCount = textToTranslate.Split(' ').Length;
 
                 // Extract custom parameters
