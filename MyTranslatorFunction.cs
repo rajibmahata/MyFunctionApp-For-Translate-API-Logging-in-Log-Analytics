@@ -12,7 +12,7 @@ namespace MyFunctionAppForLogging
     public class MyFunction
     {
         private readonly ILogger _logger;
-        private readonly string key = "<key>";
+        private readonly string key = Environment.GetEnvironmentVariable("Ocp-Apim-Subscription-Key");
         private readonly string endpoint = "https://api.cognitive.microsofttranslator.com";
 
         // location, also known as region.
@@ -28,15 +28,19 @@ namespace MyFunctionAppForLogging
         {
             try
             {
-                _logger.LogInformation("C# HTTP trigger function processed a request.");
+                _logger.LogInformation("MyTranslatorFunction function processed a request.");
 
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+
+                dynamic data = JsonConvert.DeserializeObject(requestBody);
+                string textToTranslate = data?.Text;
+                // Calculate word count
+                int wordCount = textToTranslate.Split(' ').Length;
 
                 // Extract custom parameters
                 var headers = req.Headers;
                 string clientName = GetHeaderValue(headers, "X-Client-Name");
                 string environment = GetHeaderValue(headers, "X-Environment");
-                string wordCount = GetHeaderValue(headers, "X-Word-Count");
                 string clientTraceId = GetHeaderValue(headers, "X-ClientTraceId");
 
                 string route = "/translate?api-version=3.0&from=en&to=hi&env=staging";
@@ -55,7 +59,7 @@ namespace MyFunctionAppForLogging
                     request.Headers.Add("X-ClientTraceId", clientTraceId);
                     request.Headers.Add("X-Client-Name", clientName);
                     request.Headers.Add("X-Environment", environment);
-                    request.Headers.Add("X-Word-Count", wordCount);
+                    request.Headers.Add("X-Word-Count", wordCount.ToString());
 
                     _logger.LogInformation("Translate API request body: " + requestBody);
                     // Send the request and get response.
@@ -67,7 +71,7 @@ namespace MyFunctionAppForLogging
                     _logger.LogInformation($"Translate API Response:{result}");
 
                     // Log custom parameters to Log Analytics
-                    _logger.LogInformation($"ClientID: {clientName},ClientTraceId:{clientTraceId}, Environment: {environment}, WordCount: {wordCount}");
+                    _logger.LogInformation($"ClientID: {clientName},ClientTraceId: {clientTraceId}, Environment: {environment}, WordCount: {wordCount}");
 
 
                     var response = req.CreateResponse(HttpStatusCode.OK);
