@@ -12,7 +12,7 @@ namespace MyFunctionAppForLogging
     public class MyFunction
     {
         private readonly ILogger _logger;
-        private readonly string key = Environment.GetEnvironmentVariable("Ocp-Apim-Subscription-Key");
+        private readonly string key = Environment.GetEnvironmentVariable("TranslatorKey");
         private readonly string endpoint = "https://api.cognitive.microsofttranslator.com";
 
         // location, also known as region.
