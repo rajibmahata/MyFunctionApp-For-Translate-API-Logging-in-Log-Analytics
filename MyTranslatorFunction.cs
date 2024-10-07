@@ -44,7 +44,7 @@ namespace MyFunctionAppForLogging
 
                 // Extract custom parameters
                 var headers = req.Headers;
-                string clientID = GetHeaderValue(headers, "X-Client-ID");
+               // string clientID = GetHeaderValue(headers, "X-Client-ID");
                 string environment = GetHeaderValue(headers, "X-Environment");
                 string clientTraceId = GetHeaderValue(headers, "X-ClientTraceId");
 
@@ -76,7 +76,7 @@ namespace MyFunctionAppForLogging
                     _logger.LogInformation($"Translate API Response:{result}");
 
                     // Log custom parameters to Log Analytics
-                    _logger.LogInformation($"ClientID: {clientID},ClientTraceId: {clientTraceId}, Environment: {environment}, WordCount: {wordCount}");
+                    _logger.LogInformation($"ClientTraceId: {clientTraceId}, Environment: {environment}, WordCount: {wordCount}");
 
 
                     var response = req.CreateResponse(HttpStatusCode.OK);
