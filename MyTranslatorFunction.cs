@@ -20,7 +20,7 @@ namespace MyFunctionAppForLogging
 
         // location, also known as region.
         // required if you're using a multi-service or regional (not global) resource. It can be found in the Azure portal on the Keys and Endpoint page.
-        private readonly string location = "eastus";
+        private readonly string location = "australiaeast";
         public MyFunction(ILoggerFactory loggerFactory, IOptions<MyConfiguration> _options)
         {
             options = _options.Value;
@@ -44,9 +44,10 @@ namespace MyFunctionAppForLogging
 
                 // Extract custom parameters
                 var headers = req.Headers;
-                string clientID = GetHeaderValue(headers, "X-Client-ID");
+                //string clientID = GetHeaderValue(headers, "X-Client-ID");
                 string environment = GetHeaderValue(headers, "X-Environment");
                 string clientTraceId = GetHeaderValue(headers, "X-ClientTraceId");
+                string BillingTraceId = GetHeaderValue(headers, "X-BillingTraceId");
 
                 string route = "/translate?api-version=3.0&from=en&to=hi&env=staging";
 
@@ -76,7 +77,8 @@ namespace MyFunctionAppForLogging
                     _logger.LogInformation($"Translate API Response:{result}");
 
                     // Log custom parameters to Log Analytics
-                    _logger.LogInformation($"ClientID: {clientID},ClientTraceId: {clientTraceId}, Environment: {environment}, WordCount: {wordCount}");
+                    _logger.LogInformation($"ClientTraceId: {clientTraceId}, Environment: {environment}, WordCount: {wordCount}, BillingTraceId: {BillingTraceId}");
+                    
 
 
                     var response = req.CreateResponse(HttpStatusCode.OK);
