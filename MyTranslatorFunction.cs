@@ -27,8 +27,8 @@ namespace MyFunctionAppForLogging
 
         // location, also known as region.
         // required if you're using a multi-service or regional (not global) resource. It can be found in the Azure portal on the Keys and Endpoint page.
-        //private readonly string location = "australiaeast";
-        private readonly string location = "eastus";
+        private readonly string location = "australiaeast";
+        //private readonly string location = "eastus";
         public MyFunction(ILoggerFactory loggerFactory, IOptions<MyConfiguration> _options)
         {
             options = _options.Value;
