@@ -9,6 +9,12 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Data;
 using System.Diagnostics.Metrics;
+using System.Net.Http.Headers;
+using Azure.Core;
+using System.Web;
+using System;
+
+
 
 namespace MyFunctionAppForLogging
 {
@@ -35,8 +41,11 @@ namespace MyFunctionAppForLogging
             try
             {
                 _logger.LogInformation("MyTranslatorFunction function processed a request.");
-
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                string queryParams = req.Url.Query;
+                var query = HttpUtility.ParseQueryString(queryParams);
+                var fromParam = query.GetValues("from")?.FirstOrDefault();
+                var toParams = query.GetValues("to");
 
                 // Calculate word count
                 List<MyTranslatorFunctionRequestModel> data = JsonConvert.DeserializeObject<List<MyTranslatorFunctionRequestModel>>(requestBody);
@@ -44,26 +53,32 @@ namespace MyFunctionAppForLogging
                 int wordCount = textToTranslate.Split(' ').Length;
 
                 // Extract custom parameters
-                var requestHeaders = req.Headers;
+                var requestHeaders = req?.Headers;
                 // string clientID = GetHeaderValue(headers, "X-Client-ID");
-                string environment = GetHeaderValue(requestHeaders, "X-Environment")?.FirstOrDefault();
-                string clientTraceId = GetHeaderValue(requestHeaders, "X-ClientTraceId")?.FirstOrDefault();
-                string from = GetHeaderValue(requestHeaders, "from")?.FirstOrDefault();
-                IEnumerable<string> tos = GetHeaderValue(requestHeaders, "to");
-                string env = GetHeaderValue(requestHeaders, "env")?.FirstOrDefault();
+                string environment = GetRequestHeaderValue(requestHeaders, "X-Environment")?.FirstOrDefault();
+                string clientTraceId = GetRequestHeaderValue(requestHeaders, "X-ClientTraceId")?.FirstOrDefault();
+                //string from = GetRequestHeaderValue(requestHeaders, "from")?.FirstOrDefault();
+                //IEnumerable<string> tos = GetRequestHeaderValue(requestHeaders, "to");
+                string env = GetRequestHeaderValue(requestHeaders, "env")?.FirstOrDefault();
 
                 //binding route url 
                 string route = $"/translate?api-version=3.0";
 
-                if (!string.IsNullOrEmpty(from))
-                    route += $"&from={from}";
+                if (!string.IsNullOrEmpty(fromParam))
+                    route += $"&from={fromParam}";
+                else
+                    route += $"&from=en";
 
-                if (tos.Count() > 0)
+                if (toParams != null && toParams.Count() > 0)
                 {
-                    foreach (var to in tos)
+                    foreach (var to in toParams)
                     {
                         route += $"&to={to}";
                     }
+                }
+                else
+                {
+                    throw new Exception("Missing 'to' parameter in the request parameters or url query");
                 }
 
                 if (!string.IsNullOrEmpty(env))
@@ -96,8 +111,8 @@ namespace MyFunctionAppForLogging
 
                     // Extract response headers parameters
                     var responseHeaders = apiresponse.Headers;
-                    string meteredUsage = GetHeaderValue(requestHeaders, "X-Metered-Usage")?.FirstOrDefault();
-                   
+                    string meteredUsage = GetResponseHeaderValue(responseHeaders, "X-Metered-Usage")?.FirstOrDefault();
+
 
                     _logger.LogInformation($"Translate API Response:{result}");
 
@@ -118,13 +133,35 @@ namespace MyFunctionAppForLogging
 
                 var response = req.CreateResponse(HttpStatusCode.BadRequest);
 
-                response.WriteString(ex.Message);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+
+                await response.WriteStringAsync(ex.Message);
 
                 return response;
             }
         }
 
-        private IEnumerable<string> GetHeaderValue(HttpHeadersCollection headers, string headerName)
+
+        private IEnumerable<string> GetRequestHeaderValue(HttpHeadersCollection headers, string headerName)
+        {
+            try
+            {
+                IEnumerable<string> value = null;
+                if (headers.TryGetValues(headerName, out var headerValues))
+                {
+                    if (headerValues.Count() > 0)
+                        value = headerValues;
+                }
+
+                return value;
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+        private IEnumerable<string> GetResponseHeaderValue(HttpResponseHeaders headers, string headerName)
         {
             try
             {
