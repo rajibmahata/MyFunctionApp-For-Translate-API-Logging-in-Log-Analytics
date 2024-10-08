@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Data;
+using System.Diagnostics.Metrics;
 
 namespace MyFunctionAppForLogging
 {
@@ -36,19 +37,39 @@ namespace MyFunctionAppForLogging
                 _logger.LogInformation("MyTranslatorFunction function processed a request.");
 
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-               
+
                 // Calculate word count
                 List<MyTranslatorFunctionRequestModel> data = JsonConvert.DeserializeObject<List<MyTranslatorFunctionRequestModel>>(requestBody);
                 string textToTranslate = data.FirstOrDefault()?.Text;
                 int wordCount = textToTranslate.Split(' ').Length;
 
                 // Extract custom parameters
-                var headers = req.Headers;
-               // string clientID = GetHeaderValue(headers, "X-Client-ID");
-                string environment = GetHeaderValue(headers, "X-Environment");
-                string clientTraceId = GetHeaderValue(headers, "X-ClientTraceId");
+                var requestHeaders = req.Headers;
+                // string clientID = GetHeaderValue(headers, "X-Client-ID");
+                string environment = GetHeaderValue(requestHeaders, "X-Environment")?.FirstOrDefault();
+                string clientTraceId = GetHeaderValue(requestHeaders, "X-ClientTraceId")?.FirstOrDefault();
+                string from = GetHeaderValue(requestHeaders, "from")?.FirstOrDefault();
+                IEnumerable<string> tos = GetHeaderValue(requestHeaders, "to");
+                string env = GetHeaderValue(requestHeaders, "env")?.FirstOrDefault();
 
-                string route = "/translate?api-version=3.0&from=en&to=hi&env=staging";
+                //binding route url 
+                string route = $"/translate?api-version=3.0";
+
+                if (!string.IsNullOrEmpty(from))
+                    route += $"&from={from}";
+
+                if (tos.Count() > 0)
+                {
+                    foreach (var to in tos)
+                    {
+                        route += $"&to={to}";
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(env))
+                {
+                    route += $"&env={env}";
+                }
 
                 using (var client = new HttpClient())
                 using (var request = new HttpRequestMessage())
@@ -73,10 +94,15 @@ namespace MyFunctionAppForLogging
                     string result = await apiresponse.Content.ReadAsStringAsync();
                     Console.WriteLine(result);
 
+                    // Extract response headers parameters
+                    var responseHeaders = apiresponse.Headers;
+                    string meteredUsage = GetHeaderValue(requestHeaders, "X-Metered-Usage")?.FirstOrDefault();
+                   
+
                     _logger.LogInformation($"Translate API Response:{result}");
 
                     // Log custom parameters to Log Analytics
-                    _logger.LogInformation($"ClientTraceId: {clientTraceId}, Environment: {environment}, WordCount: {wordCount}");
+                    _logger.LogInformation($"ClientTraceId: {clientTraceId}, Environment: {environment}, MeteredUsage: {meteredUsage}");
 
 
                     var response = req.CreateResponse(HttpStatusCode.OK);
@@ -98,15 +124,15 @@ namespace MyFunctionAppForLogging
             }
         }
 
-        private string GetHeaderValue(HttpHeadersCollection headers, string headerName)
+        private IEnumerable<string> GetHeaderValue(HttpHeadersCollection headers, string headerName)
         {
             try
             {
-                string value = string.Empty;
+                IEnumerable<string> value = null;
                 if (headers.TryGetValues(headerName, out var headerValues))
                 {
                     if (headerValues.Count() > 0)
-                        value = headerValues.FirstOrDefault();
+                        value = headerValues;
                 }
 
                 return value;
