@@ -18,13 +18,13 @@ This README provides step-by-step instructions to set up and use Azure Translato
 - **API URL**: {Text Translator URL}/translate?api-version=3.0&from=en&to=hi&env=staging Example: <https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&from=en&to=hi&env=staging>
 - **Headers:**
 
-      Ocp-Apim-Subscription-Key: e16ee1d4c43449de8a43e77361b7e4ac
+      Ocp-Apim-Subscription-Key: ************************
       Ocp-Apim-Subscription-Region: eastus
       Content-Type: application/json
 
 - **Optional Custom Headers:**
 
-      X-ClientTraceId: 0f4d2740-378b-46a7-8c38-154239511228
+      X-ClientTraceId: 0f4d2740-378b-46a7-*********
       X-Client-ID: ClientA
       X-Environment: UAT
       X-Word-Count: 50
@@ -75,7 +75,7 @@ Function Code: [MyTranslatorFunction.cs](https://github.com/rajibmahata/MyFuncti
 **Example Headers for API Requests**
 
 1. Custom Parameters:
-  X-ClientTraceId: 0f4d2740-378b-46a7-8c38-154239511228
+  X-ClientTraceId: 0f4d2740-378b-46a7-8c38-*********
   X-Client-ID: ClientA
   X-Environment: UAT
 2. Dynamic Parameters:
